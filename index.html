@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WebAR SLAM - Surface Tracking</title>
   <!-- Include Three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-  <!-- Include GLTFLoader -->
-  
+  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js" type="module"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
   <button id="arButton" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px;">Enter AR</button>
 
-<script>
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/GLTFLoader.js';
+
   // WebGL Renderer
-  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.xr.enabled = true; // Enable WebXR
@@ -29,7 +29,7 @@
   scene.add(light);
 
   // GLTF Model Loader
-  const gltfLoader = new THREE.GLTFLoader();
+  const gltfLoader = new GLTFLoader();
   let model = null;
 
   // Load the 3D model
