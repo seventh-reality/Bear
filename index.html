@@ -4,107 +4,105 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WebAR SLAM - Surface Tracking</title>
-  <!-- Include Three.js -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js"></script>
+  <!-- No additional scripts here; imports are handled inside the script tag -->
 </head>
 <body style="margin: 0; overflow: hidden;">
   <button id="arButton" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px;">Enter AR</button>
 
-<script type="module">
-  // Import modules using absolute paths
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
-  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/GLTFLoader.js';
+  <script type="module">
+    // Import Three.js and GLTFLoader using CDN
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/GLTFLoader.js';
 
-  // WebGL Renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true; // Enable WebXR
-  document.body.appendChild(renderer.domElement);
+    // WebGL Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true; // Enable WebXR
+    document.body.appendChild(renderer.domElement);
 
-  // Scene and Camera
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // Scene and Camera
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-  // Add light to the scene
-  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-  scene.add(light);
+    // Add light to the scene
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    scene.add(light);
 
-  // GLTF Model Loader
-  const gltfLoader = new GLTFLoader();
-  let model = null;
+    // GLTF Model Loader
+    const gltfLoader = new GLTFLoader();
+    let model = null;
 
-  // Load the 3D model
-  gltfLoader.load(
-    'bear.glb', // Replace with the path to your GLTF model
-    (gltf) => {
-      model = gltf.scene;
-      model.visible = false; // Initially hide the model
-      model.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
-      scene.add(model);
-    },
-    undefined,
-    (error) => {
-      console.error('Error loading model:', error);
-    }
-  );
+    // Load the 3D model
+    gltfLoader.load(
+      'bear.glb', // Replace with the path to your GLTF model
+      (gltf) => {
+        model = gltf.scene;
+        model.visible = false; // Initially hide the model
+        model.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
+        scene.add(model);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading model:', error);
+      }
+    );
 
-  // WebXR Hit Testing
-  let hitTestSource = null;
+    // WebXR Hit Testing
+    let hitTestSource = null;
 
-  function onSelect(event) {
-    if (model) {
-      const xrSession = renderer.xr.getSession();
-      const frame = event.frame;
-      const referenceSpace = renderer.xr.getReferenceSpace();
+    function onSelect(event) {
+      if (model) {
+        const xrSession = renderer.xr.getSession();
+        const frame = event.frame;
+        const referenceSpace = renderer.xr.getReferenceSpace();
 
-      const hitTestResults = frame.getHitTestResults(hitTestSource);
-      if (hitTestResults.length > 0) {
-        const hit = hitTestResults[0];
-        const pose = hit.getPose(referenceSpace);
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+        if (hitTestResults.length > 0) {
+          const hit = hitTestResults[0];
+          const pose = hit.getPose(referenceSpace);
 
-        // Place the model at the hit position
-        model.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
-        model.visible = true; // Make the model visible
+          // Place the model at the hit position
+          model.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+          model.visible = true; // Make the model visible
+        }
       }
     }
-  }
 
-  renderer.xr.addEventListener('sessionstart', async () => {
-    const session = renderer.xr.getSession();
+    renderer.xr.addEventListener('sessionstart', async () => {
+      const session = renderer.xr.getSession();
 
-    // Request hit test source
-    const referenceSpace = renderer.xr.getReferenceSpace();
-    hitTestSource = await session.requestHitTestSource({ space: referenceSpace });
-    session.addEventListener('select', onSelect);
-  });
-
-  renderer.xr.addEventListener('sessionend', () => {
-    hitTestSource = null;
-  });
-
-  // Render loop
-  function animate() {
-    renderer.setAnimationLoop(() => {
-      renderer.render(scene, camera);
+      // Request hit test source
+      const referenceSpace = renderer.xr.getReferenceSpace();
+      hitTestSource = await session.requestHitTestSource({ space: referenceSpace });
+      session.addEventListener('select', onSelect);
     });
-  }
 
-  // AR Button
-  const arButton = document.getElementById('arButton');
-  arButton.addEventListener('click', () => {
-    if (navigator.xr) {
-      navigator.xr.requestSession('immersive-ar', {
-        requiredFeatures: ['hit-test'],
-      }).then((session) => {
-        renderer.xr.setSession(session);
+    renderer.xr.addEventListener('sessionend', () => {
+      hitTestSource = null;
+    });
+
+    // Render loop
+    function animate() {
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
       });
-    } else {
-      alert('WebXR is not supported on this device or browser.');
     }
-  });
 
-  animate();
-</script>
+    // AR Button
+    const arButton = document.getElementById('arButton');
+    arButton.addEventListener('click', () => {
+      if (navigator.xr) {
+        navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test'],
+        }).then((session) => {
+          renderer.xr.setSession(session);
+        });
+      } else {
+        alert('WebXR is not supported on this device or browser.');
+      }
+    });
 
+    animate();
+  </script>
 </body>
 </html>
