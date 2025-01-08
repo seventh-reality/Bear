@@ -6,9 +6,9 @@
   <title>WebAR SLAM - Surface Tracking</title>
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/vr/WebXRButton.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
+  <button id="arButton" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px;">Enter AR</button>
 
 <script>
   // WebGL Renderer
@@ -24,9 +24,6 @@
   // Add light to the scene
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
   scene.add(light);
-
-  // Add WebXR Button
-  document.body.appendChild(THREE.WebXRButton.createButton(renderer));
 
   // GLTF Model Loader
   const gltfLoader = new THREE.GLTFLoader();
@@ -47,9 +44,8 @@
     }
   );
 
-  // Set up WebXR hit testing
+  // WebXR Hit Testing
   let hitTestSource = null;
-  let hitTestSourceRequested = false;
 
   function onSelect(event) {
     if (model) {
@@ -57,7 +53,6 @@
       const frame = event.frame;
       const referenceSpace = renderer.xr.getReferenceSpace();
 
-      // Get the hit test results
       const hitTestResults = frame.getHitTestResults(hitTestSource);
       if (hitTestResults.length > 0) {
         const hit = hitTestResults[0];
@@ -70,7 +65,6 @@
     }
   }
 
-  // Add event listener for XRSession
   renderer.xr.addEventListener('sessionstart', async () => {
     const session = renderer.xr.getSession();
 
@@ -82,7 +76,6 @@
 
   renderer.xr.addEventListener('sessionend', () => {
     hitTestSource = null;
-    hitTestSourceRequested = false;
   });
 
   // Render loop
@@ -91,6 +84,21 @@
       renderer.render(scene, camera);
     });
   }
+
+  // AR Button
+  const arButton = document.getElementById('arButton');
+  arButton.addEventListener('click', () => {
+    if (navigator.xr) {
+      navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test'],
+      }).then((session) => {
+        renderer.xr.setSession(session);
+      });
+    } else {
+      alert('WebXR is not supported on this device or browser.');
+    }
+  });
+
   animate();
 </script>
 
