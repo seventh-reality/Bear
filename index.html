@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WebAR SLAM - Surface Tracking</title>
+  <!-- Include Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+  <!-- Include GLTFLoader -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
@@ -31,7 +33,7 @@
 
   // Load the 3D model
   gltfLoader.load(
-    'bear.glb', // Replace with the path to your GLTF model
+    'path/to/your/model.gltf', // Replace with the path to your GLTF model
     (gltf) => {
       model = gltf.scene;
       model.visible = false; // Initially hide the model
