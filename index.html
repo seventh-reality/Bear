@@ -11,8 +11,8 @@
   <button id="arButton" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px;">Enter AR</button>
 
   <script type="module">
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
-  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/GLTFLoader.js';
+  import * as THREE from 'three.module.js';
+  import { GLTFLoader } from 'GLTFLoader.js';
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
