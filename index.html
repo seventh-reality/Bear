@@ -1,108 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebAR SLAM - Surface Tracking</title>
-</head>
-<body style="margin: 0; overflow: hidden;">
-  <button id="arButton" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px;">Enter AR</button>
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>8th Wall Web: three.js</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
 
-  <script type="module">
-    // Import local files for THREE.js and GLTFLoader
-    import * as THREE from './three.module.js';
-    import { GLTFLoader } from './GLTFLoader.js';
+    <!-- THREE.js must be supplied -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r123/three.min.js"></script>
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.xr.enabled = true;
-    document.body.appendChild(renderer.domElement);
+    <!-- Required to load glTF (.gltf or .glb) models -->
+    <script src="//cdn.rawgit.com/mrdoob/three.js/r123/examples/js/loaders/GLTFLoader.js"></script>
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    <!-- Javascript tweening engine -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
 
-    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-    scene.add(light);
+    <!-- XR Extras - provides utilities like load screen, almost there, and error handling.
+         See github.com/8thwall/web/tree/master/xrextras -->
+    <script src="//cdn.8thwall.com/web/xrextras/xrextras.js"></script>
 
-    const gltfLoader = new GLTFLoader();
-    let model = null;
+    <!-- 8thWall Web - Replace the app key here with your own app key -->
+    <script async src="//apps.8thwall.com/xrweb?appKey=XXXXXXXX"></script>
 
-    gltfLoader.load(
-      './bear.glb', // Path to your GLTF model file
-      (gltf) => {
-        model = gltf.scene;
-        model.visible = false;
-        model.scale.set(0.5, 0.5, 0.5);
-        scene.add(model);
-      },
-      () => console.log('Loading model...'),
-      (error) => console.error('Error loading model:', error)
-    );
+    <!-- client code -->
+    <script src="index.js"></script>
+  </head>
 
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
-
-    function onSelect() {
-      if (hitTestSource) {
-        const session = renderer.xr.getSession();
-        session.requestAnimationFrame((time, frame) => {
-          const viewerSpace = renderer.xr.getReferenceSpace();
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-          if (hitTestResults.length > 0) {
-            const hit = hitTestResults[0];
-            const pose = hit.getPose(viewerSpace);
-
-            if (pose) {
-              model.position.set(
-                pose.transform.position.x,
-                pose.transform.position.y,
-                pose.transform.position.z
-              );
-              model.visible = true;
-            }
-          }
-        });
-      }
-    }
-
-    async function initARSession() {
-      const session = await navigator.xr.requestSession('immersive-ar', {
-        requiredFeatures: ['hit-test'],
-      });
-
-      renderer.xr.setSession(session);
-
-      session.addEventListener('select', onSelect);
-
-      const referenceSpace = await session.requestReferenceSpace('local');
-      const viewerSpace = await session.requestReferenceSpace('viewer');
-
-      hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-      hitTestSourceRequested = true;
-
-      session.addEventListener('end', () => {
-        hitTestSource = null;
-        hitTestSourceRequested = false;
-      });
-    }
-
-    function animate() {
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-    }
-
-    const arButton = document.getElementById('arButton');
-    arButton.addEventListener('click', () => {
-      if (navigator.xr) {
-        initARSession().catch((err) => console.error('Failed to start AR session:', err));
-      } else {
-        console.log('WebXR not supported in this browser.');
-      }
-    });
-
-    animate();
-  </script>
-</body>
+  <body>
+    <canvas id="camerafeed"></canvas>
+  </body>
 </html>
