@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markerless AR.js with Centered Pivot Zoom</title>
+  <title>Markerless AR.js with Model Toggle and Animation</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
   <style>
@@ -26,11 +26,9 @@
       font-family: Arial, sans-serif;
       z-index: 10;
     }
-    button {
+    .button {
       position: absolute;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
       padding: 10px 20px;
       font-size: 16px;
       background-color: #007BFF;
@@ -40,14 +38,23 @@
       cursor: pointer;
       z-index: 10;
     }
-    button:hover {
+    #button-model1 {
+      left: 30%;
+      transform: translateX(-50%);
+    }
+    #button-model2 {
+      left: 70%;
+      transform: translateX(-50%);
+    }
+    .button:hover {
       background-color: #0056b3;
     }
   </style>
 </head>
 <body>
   <div id="info">Move your device to detect surfaces. Tap to place the object. Use pinch or scroll to zoom.</div>
-  <button id="reset-button">Reset Object</button>
+  <button id="button-model1" class="button">Load Model 1</button>
+  <button id="button-model2" class="button">Load Model 2</button>
 
   <a-scene
     vr-mode-ui="enabled: false"
@@ -72,14 +79,24 @@
       class="clickable"
     ></a-plane>
 
-    <!-- 3D Model -->
+    <!-- Model 1 -->
     <a-entity
-      id="model"
-      gltf-model="bear.glb"
+      id="model1"
+      gltf-model="model1.glb"
       scale="0.5 0.5 0.5"
       position="0 0 0"
       visible="false"
-      pivot-center
+      animation-mixer
+    ></a-entity>
+
+    <!-- Model 2 -->
+    <a-entity
+      id="model2"
+      gltf-model="model2.glb"
+      scale="0.5 0.5 0.5"
+      position="0 0 0"
+      visible="false"
+      animation-mixer
     ></a-entity>
 
     <!-- AR Camera -->
@@ -94,37 +111,51 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const ground = document.getElementById("ground");
-      const model = document.getElementById("model");
-      const resetButton = document.getElementById("reset-button");
+      const model1 = document.getElementById("model1");
+      const model2 = document.getElementById("model2");
+      const buttonModel1 = document.getElementById("button-model1");
+      const buttonModel2 = document.getElementById("button-model2");
 
-      // Initial scale of the model
-      let scale = 0.5;
+      let scale = 0.5; // Initial scale
       let initialPinchDistance = null;
 
-      // Add a click event to place the 3D model
+      // Add a click event to place the selected 3D model
       ground.addEventListener("click", (event) => {
         const intersectPoint = event.detail.intersection.point;
 
-        // Place the model at the clicked position
-        model.setAttribute("position", intersectPoint);
-        model.setAttribute("visible", "true");
+        if (model1.getAttribute("visible") === "true") {
+          model1.setAttribute("position", intersectPoint);
+        } else if (model2.getAttribute("visible") === "true") {
+          model2.setAttribute("position", intersectPoint);
+        }
       });
 
-      // Reset model position and scale
-      resetButton.addEventListener("click", () => {
-        model.setAttribute("visible", "false");
-        model.setAttribute("position", "0 0 0");
-        scale = 0.5; // Reset scale
-        model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+      // Toggle buttons for switching models
+      buttonModel1.addEventListener("click", () => {
+        model1.setAttribute("visible", "true");
+        model2.setAttribute("visible", "false");
+        model1.setAttribute("scale", `${scale} ${scale} ${scale}`);
+        model1.components["animation-mixer"].play(); // Play animations
+      });
+
+      buttonModel2.addEventListener("click", () => {
+        model2.setAttribute("visible", "true");
+        model1.setAttribute("visible", "false");
+        model2.setAttribute("scale", `${scale} ${scale} ${scale}`);
+        model2.components["animation-mixer"].play(); // Play animations
       });
 
       // Add mouse wheel for zoom functionality
       window.addEventListener("wheel", (event) => {
-        if (model.getAttribute("visible") === "true") {
-          // Adjust scale based on scroll direction
+        if (model1.getAttribute("visible") === "true" || model2.getAttribute("visible") === "true") {
           scale += event.deltaY * -0.001;
           scale = Math.min(Math.max(scale, 0.1), 3); // Clamp scale between 0.1 and 3
-          model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+
+          if (model1.getAttribute("visible") === "true") {
+            model1.setAttribute("scale", `${scale} ${scale} ${scale}`);
+          } else if (model2.getAttribute("visible") === "true") {
+            model2.setAttribute("scale", `${scale} ${scale} ${scale}`);
+          }
         }
       });
 
@@ -142,7 +173,13 @@
 
           scale *= pinchScaleFactor;
           scale = Math.min(Math.max(scale, 0.1), 3); // Clamp scale between 0.1 and 3
-          model.setAttribute("scale", `${scale} ${scale} ${scale}`);
+
+          if (model1.getAttribute("visible") === "true") {
+            model1.setAttribute("scale", `${scale} ${scale} ${scale}`);
+          } else if (model2.getAttribute("visible") === "true") {
+            model2.setAttribute("scale", `${scale} ${scale} ${scale}`);
+          }
+
           initialPinchDistance = currentPinchDistance; // Update initial pinch distance
         }
       });
