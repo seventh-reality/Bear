@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markerless AR.js with Three.js</title>
+  <title>Markerless AR.js with Centered Pivot Zoom</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
   <style>
@@ -79,6 +79,7 @@
       scale="0.5 0.5 0.5"
       position="0 0 0"
       visible="false"
+      pivot-center
     ></a-entity>
 
     <!-- AR Camera -->
@@ -98,6 +99,7 @@
 
       // Initial scale of the model
       let scale = 0.5;
+      let initialPinchDistance = null;
 
       // Add a click event to place the 3D model
       ground.addEventListener("click", (event) => {
@@ -116,7 +118,7 @@
         model.setAttribute("scale", `${scale} ${scale} ${scale}`);
       });
 
-      // Add mouse wheel and touch gesture for zoom
+      // Add mouse wheel for zoom functionality
       window.addEventListener("wheel", (event) => {
         if (model.getAttribute("visible") === "true") {
           // Adjust scale based on scroll direction
@@ -126,16 +128,13 @@
         }
       });
 
-      let initialPinchDistance = null;
-
-      // Touchstart: Detect pinch gesture
+      // Detect pinch gesture for touch devices
       window.addEventListener("touchstart", (event) => {
         if (event.touches.length === 2) {
           initialPinchDistance = getPinchDistance(event);
         }
       });
 
-      // Touchmove: Adjust scale during pinch gesture
       window.addEventListener("touchmove", (event) => {
         if (event.touches.length === 2 && initialPinchDistance) {
           const currentPinchDistance = getPinchDistance(event);
