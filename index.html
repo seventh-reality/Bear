@@ -1,53 +1,118 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>8th Wall Web + MRCS</title>
-  <!-- <link rel="stylesheet" type="text/css" href="index.css"> -->
-
-  <!-- THREE.js must be supplied -->
-  <script src="three.js"></script>
-  <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script> -->
-  <script src="holovideoobject.js"></script>
-
-  <!-- Required to load glTF (.gltf or .glb) models -->
-  <script src="//cdn.rawgit.com/mrdoob/three.js/r93/examples/js/loaders/GLTFLoader.js"></script>
-
-  <link href="https://fonts.googleapis.com/css?family=Nunito:700&display=swap" rel="stylesheet">
-
-  <!-- Javascript tweening engine -->
-  <script src="//cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
-
-  <!-- XR Extras - provides utilities like load screen, almost there, and error handling.
-         See github.com/8thwall/web/xrextras -->
-  <script src="//cdn.8thwall.com/web/xrextras/xrextras.js"></script>
-
-  <!-- 8thWall Web - Replace the app key here with your own app key -->
-  <script async
-          src="https://apps.8thwall.com/xrweb?appKey=4Nm5c9vr7dU7d4bvCV1ZvgpjXgdQ3KZjdOpRBcseVn2crcLqUFgZp1fqBujINT48AY6bj5"></script>
-
-  <!-- client code -->
-  <script src="index.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markerless AR.js with Three.js</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r110/three.min.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 10;
+    }
+    button {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
-
 <body>
-  <div id="overlay"
-  style="position: absolute;
-         text-align: center;
-         bottom: 12vh;
-         width: 100%;
-         z-index: 10;
-         ">
-    <h2
-    style="text-align: center;
-           color: white;
-           font-family: 'Nunito', monospace;
-           font-size: 8vw;
-           text-shadow: 0px 0px 5px black;
-    ">Tap to Place<br>Hologram</h2>
-  </div>
+  <div id="info">Move the camera to detect a surface, then tap to place the object.</div>
+  <button id="reset-button">Reset Object</button>
 
-  <canvas id="camerafeed"></canvas>
+  <a-scene
+    vr-mode-ui="enabled: false"
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
+  >
+    <!-- Lighting -->
+    <a-light type="directional" position="0 5 5" intensity="1.5"></a-light>
+    <a-light type="ambient" intensity="0.5"></a-light>
+
+    <!-- Ground (simulating surface detection) -->
+    <a-plane
+      id="ground"
+      position="0 0 0"
+      rotation="-90 0 0"
+      width="10"
+      height="10"
+      color="#ffffff"
+      opacity="0.2"
+      material="shader: flat"
+      class="clickable"
+    ></a-plane>
+
+    <!-- 3D Model -->
+    <a-entity
+      id="model"
+      gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/BoxAnimated/glTF/BoxAnimated.gltf"
+      scale="0.5 0.5 0.5"
+      position="0 0 0"
+      visible="false"
+    ></a-entity>
+
+    <!-- Camera -->
+    <a-camera
+      gps-camera
+      position="0 1.6 0"
+      raycaster="objects: .clickable"
+      cursor="fuse: false; rayOrigin: mouse"
+    ></a-camera>
+  </a-scene>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const ground = document.getElementById("ground");
+      const model = document.getElementById("model");
+      const resetButton = document.getElementById("reset-button");
+
+      // Add a click event to place the 3D model
+      ground.addEventListener("click", (event) => {
+        // Get the position of the click
+        const intersectPoint = event.detail.intersection.point;
+
+        // Place the model at the clicked position
+        model.setAttribute("position", intersectPoint);
+        model.setAttribute("visible", "true");
+      });
+
+      // Reset model position
+      resetButton.addEventListener("click", () => {
+        model.setAttribute("visible", "false");
+        model.setAttribute("position", "0 0 0");
+      });
+    });
+  </script>
 </body>
-
 </html>
