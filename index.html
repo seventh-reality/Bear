@@ -6,7 +6,6 @@
   <title>Markerless AR.js with Three.js</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r110/three.min.js"></script>
   <style>
     body, html {
       margin: 0;
@@ -47,20 +46,20 @@
   </style>
 </head>
 <body>
-  <div id="info">Move the camera to detect a surface, then tap to place the object.</div>
+  <div id="info">Move your device to detect surfaces. Tap to place the object.</div>
   <button id="reset-button">Reset Object</button>
 
   <a-scene
     vr-mode-ui="enabled: false"
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3"
+    arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best"
     renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
   >
     <!-- Lighting -->
     <a-light type="directional" position="0 5 5" intensity="1.5"></a-light>
     <a-light type="ambient" intensity="0.5"></a-light>
 
-    <!-- Ground (simulating surface detection) -->
+    <!-- Ground Plane -->
     <a-plane
       id="ground"
       position="0 0 0"
@@ -76,18 +75,18 @@
     <!-- 3D Model -->
     <a-entity
       id="model"
-      gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/BoxAnimated/glTF/BoxAnimated.gltf"
+      gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"
       scale="0.5 0.5 0.5"
       position="0 0 0"
       visible="false"
     ></a-entity>
 
-    <!-- Camera -->
+    <!-- AR Camera -->
     <a-camera
-      gps-camera
       position="0 1.6 0"
+      cursor="rayOrigin: mouse"
       raycaster="objects: .clickable"
-      cursor="fuse: false; rayOrigin: mouse"
+      gps-camera
     ></a-camera>
   </a-scene>
 
@@ -97,12 +96,9 @@
       const model = document.getElementById("model");
       const resetButton = document.getElementById("reset-button");
 
-      // Add a click event to place the 3D model
+      // Event listener to place 3D model on the ground plane
       ground.addEventListener("click", (event) => {
-        // Get the position of the click
         const intersectPoint = event.detail.intersection.point;
-
-        // Place the model at the clicked position
         model.setAttribute("position", intersectPoint);
         model.setAttribute("visible", "true");
       });
