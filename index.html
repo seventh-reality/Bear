@@ -26,6 +26,19 @@
       font-family: Arial, sans-serif;
       z-index: 10;
     }
+    #error-message {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 20;
+    }
     button {
       position: absolute;
       bottom: 20px;
@@ -47,6 +60,7 @@
 </head>
 <body>
   <div id="info">Move your device to detect surfaces. Tap to place the object. Use pinch or scroll to zoom.</div>
+  <div id="error-message">Camera access failed. Please check browser permissions and HTTPS connection.</div>
   <button id="reset-button">Reset Object</button>
 
   <a-scene
@@ -95,10 +109,17 @@
       const ground = document.getElementById("ground");
       const model = document.getElementById("model");
       const resetButton = document.getElementById("reset-button");
+      const errorMessage = document.getElementById("error-message");
 
       // Initial scale of the model
       let scale = 0.5;
       let initialPinchDistance = null;
+
+      // Check for camera errors
+      const scene = document.querySelector("a-scene");
+      scene.addEventListener("camera-error", () => {
+        errorMessage.style.display = "block";
+      });
 
       // Add a click event to place the 3D model
       ground.addEventListener("click", (event) => {
