@@ -8,7 +8,7 @@
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/loaders/GLTFLoader.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
   <style>
     body, html {
       margin: 0;
@@ -75,9 +75,7 @@
     ></a-camera>
   </a-scene>
 
-  <script type="module">
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/loaders/GLTFLoader.js';
-
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
       const ground = document.getElementById("ground");
       const modelEntity = document.getElementById("model");
@@ -87,7 +85,7 @@
       let scale = 0.5;
 
       // Load the 3D model
-      const loader = new GLTFLoader();
+      const loader = new THREE.GLTFLoader();
       loader.load("Sterrad_PARTS.glb", (gltf) => {
         const model = gltf.scene;
         model.scale.set(scale, scale, scale);
