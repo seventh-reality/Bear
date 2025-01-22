@@ -7,7 +7,7 @@
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
     <script>
-      AFRAME.registerComponent('ar-hit-test', {
+      AFRAME.registerComponent('custom-ar-hit-test', {
         schema: {
           target: { type: 'selector' },
         },
@@ -84,7 +84,7 @@
       vr-mode-ui="enabled: false"
       webxr="optionalFeatures: hit-test;"
       embedded
-      ar-hit-test="target: #placed-object"
+      custom-ar-hit-test="target: #placed-object"
     >
       <!-- Ground marker -->
       <a-plane
