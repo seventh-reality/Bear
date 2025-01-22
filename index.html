@@ -3,150 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web AR with SLAM</title>
-  <!-- Include AR.js and Three.js -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
+  <title>Web AR with Three.js and Onirix SDK</title>
+  <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
+  <script src="https://sdk.onirix.com/onirix-sdk.min.js"></script>
   <style>
-    body, html {
+    body {
       margin: 0;
-      padding: 0;
       overflow: hidden;
-      width: 100%;
-      height: 100%;
     }
-    #reset-button {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 10;
-    }
-    #reset-button:hover {
-      background-color: #0056b3;
+    canvas {
+      display: block;
     }
   </style>
 </head>
 <body>
-  <!-- Reset Button -->
-  <button id="reset-button">Reset</button>
-
-  <!-- A-Frame Scene -->
-  <a-scene
-    vr-mode-ui="enabled: false"
-    embedded
-    arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false"
-    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
-  >
-    <!-- Lighting -->
-    <a-light type="directional" position="0 5 5" intensity="1.5" castShadow></a-light>
-    <a-light type="ambient" intensity="0.5"></a-light>
-
-    <!-- Ground Plane -->
-    <a-plane
-      id="ground"
-      position="0 0 0"
-      rotation="-90 0 0"
-      width="10"
-      height="10"
-      color="#ffffff"
-      opacity="0.2"
-      material="shader: flat"
-      class="clickable"
-    ></a-plane>
-
-    <!-- 3D Model -->
-    <a-entity id="model" visible="false"></a-entity>
-
-    <!-- AR Camera -->
-    <a-camera
-      position="0 1.6 0"
-      raycaster="objects: .clickable"
-      cursor="fuse: false; rayOrigin: mouse"
-    ></a-camera>
-  </a-scene>
-
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const ground = document.getElementById("ground");
-      const modelEntity = document.getElementById("model");
-      const resetButton = document.getElementById("reset-button");
+    // Initialize Onirix SDK
+    const config = {
+      mode: "surface", // Markerless surface tracking mode
+      apiToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k", // Replace with your Onirix API token
+    };
 
-      let modelLoaded = false;
-      let scale = 0.5;
+    // Initialize the Onirix AR Session
+    const session = new OnirixSDK.createSession(config);
 
-      // Load the 3D model
-      const loader = new THREE.GLTFLoader();
-      loader.load("Sterrad_PARTS.glb", (gltf) => {
-        const model = gltf.scene;
-        model.scale.set(scale, scale, scale);
-        modelEntity.setObject3D("mesh", model);
-        modelLoaded = true;
-      });
+    // Initialize Three.js Scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
 
-      // Handle click events on the ground
-      ground.addEventListener("click", (event) => {
-        if (!modelLoaded) return;
+    // Add light
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(1, 2, 3);
+    scene.add(light);
 
-        const intersectionPoint = event.detail.intersection.point;
-        modelEntity.setAttribute("position", intersectionPoint);
-        modelEntity.setAttribute("visible", "true");
-      });
+    // Add a basic object (cube)
+    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.visible = false; // Initially hidden
+    scene.add(cube);
 
-      // Reset button functionality
-      resetButton.addEventListener("click", () => {
-        modelEntity.setAttribute("visible", "false");
-        modelEntity.setAttribute("position", "0 0 0");
-      });
+    // Handle Onirix events
+    session.on("sessionStart", () => {
+      console.log("AR session started");
+      cube.visible = true; // Show cube when AR session starts
+    });
 
-      // Zoom with mouse wheel
-      window.addEventListener("wheel", (event) => {
-        if (modelEntity.getAttribute("visible") === "true") {
-          scale += event.deltaY * -0.001;
-          scale = Math.min(Math.max(scale, 0.1), 3);
-          const object3D = modelEntity.getObject3D("mesh");
-          if (object3D) object3D.scale.set(scale, scale, scale);
-        }
-      });
+    session.on("update", (frame) => {
+      // Update AR session
+      const pose = frame.camera.pose;
+      camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+      camera.quaternion.set(pose.rotation.x, pose.rotation.y, pose.rotation.z, pose.rotation.w);
 
-      // Pinch gesture for mobile devices
-      let initialPinchDistance = null;
-      window.addEventListener("touchstart", (event) => {
-        if (event.touches.length === 2) {
-          initialPinchDistance = getPinchDistance(event);
-        }
-      });
+      // Handle surface tracking
+      if (frame.anchors.length > 0) {
+        const anchor = frame.anchors[0];
+        const position = anchor.position;
+        const rotation = anchor.rotation;
 
-      window.addEventListener("touchmove", (event) => {
-        if (event.touches.length === 2 && initialPinchDistance) {
-          const currentPinchDistance = getPinchDistance(event);
-          const pinchScaleFactor = currentPinchDistance / initialPinchDistance;
-
-          scale *= pinchScaleFactor;
-          scale = Math.min(Math.max(scale, 0.1), 3);
-
-          const object3D = modelEntity.getObject3D("mesh");
-          if (object3D) object3D.scale.set(scale, scale, scale);
-
-          initialPinchDistance = currentPinchDistance;
-        }
-      });
-
-      // Utility function for pinch distance
-      function getPinchDistance(event) {
-        const dx = event.touches[0].clientX - event.touches[1].clientX;
-        const dy = event.touches[0].clientY - event.touches[1].clientY;
-        return Math.sqrt(dx * dx + dy * dy);
+        // Place cube on the tracked surface
+        cube.position.set(position.x, position.y, position.z);
+        cube.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
       }
+
+      renderer.render(scene, camera);
+    });
+
+    session.on("sessionEnd", () => {
+      console.log("AR session ended");
+    });
+
+    // Start AR session
+    session.start().catch((error) => {
+      console.error("Error starting AR session:", error);
+    });
+
+    // Handle resizing
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
 </body>
