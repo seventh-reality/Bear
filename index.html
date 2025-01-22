@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Web AR with Three.js and Onirix SDK</title>
   <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
-  <script src="https://sdk.onirix.com/onirix-sdk.min.js"></script>
+  <script src="https://sdk.onirix.com/onirix-web-sdk.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -24,8 +24,14 @@
       apiToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k", // Replace with your Onirix API token
     };
 
-    // Initialize the Onirix AR Session
-    const session = new OnirixSDK.createSession(config);
+    // Create a new AR session using Onirix
+    let session;
+    try {
+      session = new OnirixWebSDK.Session(config);
+    } catch (error) {
+      console.error("Failed to initialize Onirix SDK:", error);
+      return;
+    }
 
     // Initialize Three.js Scene
     const scene = new THREE.Scene();
@@ -60,7 +66,7 @@
       camera.quaternion.set(pose.rotation.x, pose.rotation.y, pose.rotation.z, pose.rotation.w);
 
       // Handle surface tracking
-      if (frame.anchors.length > 0) {
+      if (frame.anchors && frame.anchors.length > 0) {
         const anchor = frame.anchors[0];
         const position = anchor.position;
         const rotation = anchor.rotation;
