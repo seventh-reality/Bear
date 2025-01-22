@@ -1,48 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markerless AR with A-Frame and AR.js</title>
-  <!-- Load A-Frame -->
-  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-  <!-- Load AR.js -->
-  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-    a-scene {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-</head>
-<body>
-  <a-scene embedded arjs>
-    <!-- Camera for AR -->
-    <a-camera gps-camera="simulateLatitude: 51.5074; simulateLongitude: -0.1278;" look-controls></a-camera>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Surface Tracking</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+    <script>
+      AFRAME.registerComponent('ar-hit-test', {
+        schema: {
+          target: { type: 'selector' },
+        },
+        init: function () {
+          this.hitTestSource = null;
+          this.renderer = this.el.sceneEl.renderer;
+          this.session = null;
+          this.isHit = false;
 
-    <!-- 3D Object: A red cube -->
-    <a-box 
-      position="0 0.5 0" 
-      scale="0.2 0.2 0.2" 
-      material="color: red; opacity: 0.8;" 
-      gps-entity-place="latitude: 51.5074; longitude: -0.1278;">
-    </a-box>
-  </a-scene>
+          this.el.sceneEl.addEventListener('enter-vr', () => {
+            if (this.el.sceneEl.is('ar-mode')) {
+              this.startHitTest();
+            }
+          });
 
-  <script>
-    // Debugging: Log when A-Frame scene loads
-    document.querySelector("a-scene").addEventListener("loaded", () => {
-      console.log("A-Frame scene loaded successfully.");
-    });
+          this.el.sceneEl.addEventListener('exit-vr', () => {
+            this.stopHitTest();
+          });
+        },
+        startHitTest: function () {
+          const session = this.renderer.xr.getSession();
 
-    // Log GPS position updates
-    document.querySelector("a-camera").addEventListener("gps-camera-update-position", (event) => {
-      console.log("Updated GPS position:", event.detail.position);
-    });
-  </script>
-</body>
+          session.requestReferenceSpace('viewer').then((refSpace) => {
+            session
+              .requestHitTestSource({ space: refSpace })
+              .then((hitTestSource) => {
+                this.hitTestSource = hitTestSource;
+              });
+          });
+
+          session.addEventListener('select', (event) => {
+            if (this.isHit && this.data.target) {
+              const position = this.hitPosition;
+              this.data.target.setAttribute('position', position);
+              this.data.target.setAttribute('visible', 'true');
+            }
+          });
+        },
+        stopHitTest: function () {
+          if (this.hitTestSource) {
+            this.hitTestSource.cancel();
+            this.hitTestSource = null;
+          }
+          this.isHit = false;
+        },
+        tick: function (_, frame) {
+          if (!this.hitTestSource || !frame) return;
+
+          const viewerSpace = this.renderer.xr.getReferenceSpace();
+          const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+
+          if (hitTestResults.length > 0) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(viewerSpace);
+            if (pose) {
+              this.hitPosition = {
+                x: pose.transform.position.x,
+                y: pose.transform.position.y,
+                z: pose.transform.position.z,
+              };
+
+              this.el.emit('ar-hit-test-result', { position: this.hitPosition });
+              this.isHit = true;
+            }
+          } else {
+            this.isHit = false;
+          }
+        },
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene
+      vr-mode-ui="enabled: false"
+      webxr="optionalFeatures: hit-test;"
+      embedded
+      ar-hit-test="target: #placed-object"
+    >
+      <!-- Ground marker -->
+      <a-plane
+        id="placed-object"
+        visible="false"
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="0.5"
+        height="0.5"
+        color="blue"
+      ></a-plane>
+
+      <!-- Camera -->
+      <a-camera gps-camera look-controls>
+        <a-light type="ambient" color="#FFFFFF"></a-light>
+      </a-camera>
+    </a-scene>
+  </body>
 </html>
