@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markerless AR with Three.js and AR.js</title>
-  <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
+  <title>Markerless AR with A-Frame and AR.js</title>
+  <!-- Load A-Frame -->
+  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+  <!-- Load AR.js -->
   <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
   <style>
     body {
@@ -20,26 +22,26 @@
 <body>
   <a-scene embedded arjs>
     <!-- Camera for AR -->
-    <a-camera position="0 0 0" look-controls-enabled="true" gps-camera="simulateLatitude: 51.5074; simulateLongitude: -0.1278;">
-    </a-camera>
+    <a-camera gps-camera="simulateLatitude: 51.5074; simulateLongitude: -0.1278;" look-controls></a-camera>
 
-    <!-- Add a 3D object: Red cube -->
+    <!-- 3D Object: A red cube -->
     <a-box 
       position="0 0.5 0" 
-      material="color: red; opacity: 0.8;" 
       scale="0.2 0.2 0.2" 
+      material="color: red; opacity: 0.8;" 
       gps-entity-place="latitude: 51.5074; longitude: -0.1278;">
     </a-box>
   </a-scene>
 
   <script>
-    // Add AR.js event listeners to confirm initialization
+    // Debugging: Log when A-Frame scene loads
     document.querySelector("a-scene").addEventListener("loaded", () => {
-      console.log("AR.js scene loaded successfully.");
+      console.log("A-Frame scene loaded successfully.");
     });
 
-    document.querySelector("a-scene").addEventListener("gps-camera-update-position", (event) => {
-      console.log("GPS position updated:", event.detail.position);
+    // Log GPS position updates
+    document.querySelector("a-camera").addEventListener("gps-camera-update-position", (event) => {
+      console.log("Updated GPS position:", event.detail.position);
     });
   </script>
 </body>
