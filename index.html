@@ -3,96 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web AR with Three.js and Onirix SDK</title>
+  <title>Markerless AR with Three.js and AR.js</title>
   <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
-  <script src="https://sdk.onirix.com/onirix-web-sdk.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
   <style>
     body {
       margin: 0;
       overflow: hidden;
     }
-    canvas {
-      display: block;
+    a-scene {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
+  <a-scene embedded arjs>
+    <!-- Camera for AR -->
+    <a-camera position="0 0 0" look-controls-enabled="true" gps-camera="simulateLatitude: 51.5074; simulateLongitude: -0.1278;">
+    </a-camera>
+
+    <!-- Add a 3D object: Red cube -->
+    <a-box 
+      position="0 0.5 0" 
+      material="color: red; opacity: 0.8;" 
+      scale="0.2 0.2 0.2" 
+      gps-entity-place="latitude: 51.5074; longitude: -0.1278;">
+    </a-box>
+  </a-scene>
+
   <script>
-    // Initialize Onirix SDK
-    const config = {
-      mode: "surface", // Markerless surface tracking mode
-      apiToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k", // Replace with your Onirix API token
-    };
-
-    // Create a new AR session using Onirix
-    let session;
-    try {
-      session = new OnirixWebSDK.Session(config);
-    } catch (error) {
-      console.error("Failed to initialize Onirix SDK:", error);
-      return;
-    }
-
-    // Initialize Three.js Scene
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    document.body.appendChild(renderer.domElement);
-
-    // Add light
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(1, 2, 3);
-    scene.add(light);
-
-    // Add a basic object (cube)
-    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.visible = false; // Initially hidden
-    scene.add(cube);
-
-    // Handle Onirix events
-    session.on("sessionStart", () => {
-      console.log("AR session started");
-      cube.visible = true; // Show cube when AR session starts
+    // Add AR.js event listeners to confirm initialization
+    document.querySelector("a-scene").addEventListener("loaded", () => {
+      console.log("AR.js scene loaded successfully.");
     });
 
-    session.on("update", (frame) => {
-      // Update AR session
-      const pose = frame.camera.pose;
-      camera.position.set(pose.position.x, pose.position.y, pose.position.z);
-      camera.quaternion.set(pose.rotation.x, pose.rotation.y, pose.rotation.z, pose.rotation.w);
-
-      // Handle surface tracking
-      if (frame.anchors && frame.anchors.length > 0) {
-        const anchor = frame.anchors[0];
-        const position = anchor.position;
-        const rotation = anchor.rotation;
-
-        // Place cube on the tracked surface
-        cube.position.set(position.x, position.y, position.z);
-        cube.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
-      }
-
-      renderer.render(scene, camera);
-    });
-
-    session.on("sessionEnd", () => {
-      console.log("AR session ended");
-    });
-
-    // Start AR session
-    session.start().catch((error) => {
-      console.error("Error starting AR session:", error);
-    });
-
-    // Handle resizing
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    document.querySelector("a-scene").addEventListener("gps-camera-update-position", (event) => {
+      console.log("GPS position updated:", event.detail.position);
     });
   </script>
 </body>
