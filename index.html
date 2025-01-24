@@ -1,106 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AR Surface Tracking</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-    <script>
-      AFRAME.registerComponent('custom-ar-hit-test', {
-        schema: {
-          target: { type: 'selector' },
-        },
-        init: function () {
-          this.hitTestSource = null;
-          this.renderer = this.el.sceneEl.renderer;
-          this.session = null;
-          this.isHit = false;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLAM Surface Tracking</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="instructions">Move your device to detect surfaces and tap to place the model.</div>
+  
+  <a-scene 
+    embedded 
+    arjs="sourceType: webcam; debugUIEnabled: false;">
+    
+    <!-- Camera and AR Controls -->
+    <a-camera position="0 1.6 0" look-controls></a-camera>
+    
+    <!-- Placeholder for placing objects -->
+    <a-entity
+      raycaster="objects: .clickable"
+      cursor="fuse: false; rayOrigin: mouse"></a-entity>
+      
+    <!-- 3D Model -->
+    <a-entity
+      gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/Duck/glTF/Duck.gltf"
+      position="0 0 -2"
+      scale="0.2 0.2 0.2"
+      class="clickable"
+      visible="false">
+    </a-entity>
+  </a-scene>
 
-          this.el.sceneEl.addEventListener('enter-vr', () => {
-            if (this.el.sceneEl.is('ar-mode')) {
-              this.startHitTest();
-            }
-          });
-
-          this.el.sceneEl.addEventListener('exit-vr', () => {
-            this.stopHitTest();
-          });
-        },
-        startHitTest: function () {
-          const session = this.renderer.xr.getSession();
-
-          session.requestReferenceSpace('viewer').then((refSpace) => {
-            session
-              .requestHitTestSource({ space: refSpace })
-              .then((hitTestSource) => {
-                this.hitTestSource = hitTestSource;
-              });
-          });
-
-          session.addEventListener('select', (event) => {
-            if (this.isHit && this.data.target) {
-              const position = this.hitPosition;
-              this.data.target.setAttribute('position', position);
-              this.data.target.setAttribute('visible', 'true');
-            }
-          });
-        },
-        stopHitTest: function () {
-          if (this.hitTestSource) {
-            this.hitTestSource.cancel();
-            this.hitTestSource = null;
-          }
-          this.isHit = false;
-        },
-        tick: function (_, frame) {
-          if (!this.hitTestSource || !frame) return;
-
-          const viewerSpace = this.renderer.xr.getReferenceSpace();
-          const hitTestResults = frame.getHitTestResults(this.hitTestSource);
-
-          if (hitTestResults.length > 0) {
-            const hit = hitTestResults[0];
-            const pose = hit.getPose(viewerSpace);
-            if (pose) {
-              this.hitPosition = {
-                x: pose.transform.position.x,
-                y: pose.transform.position.y,
-                z: pose.transform.position.z,
-              };
-
-              this.el.emit('ar-hit-test-result', { position: this.hitPosition });
-              this.isHit = true;
-            }
-          } else {
-            this.isHit = false;
-          }
-        },
-      });
-    </script>
-  </head>
-  <body>
-    <a-scene
-      vr-mode-ui="enabled: false"
-      webxr="optionalFeatures: hit-test;"
-      embedded
-      custom-ar-hit-test="target: #placed-object"
-    >
-      <!-- Ground marker -->
-      <a-plane
-        id="placed-object"
-        visible="false"
-        position="0 0 0"
-        rotation="-90 0 0"
-        width="0.5"
-        height="0.5"
-        color="blue"
-      ></a-plane>
-
-      <!-- Camera -->
-      <a-camera gps-camera look-controls>
-        <a-light type="ambient" color="#FFFFFF"></a-light>
-      </a-camera>
-    </a-scene>
-  </body>
+  <script>
+    document.addEventListener("click", (event) => {
+      const scene = document.querySelector("a-scene");
+      const model = document.querySelector("a-entity[visible='false']");
+      
+      // Calculate tap coordinates
+      const touch = event.changedTouches ? event.changedTouches[0] : event;
+      const x = (touch.clientX / window.innerWidth) * 2 - 1;
+      const y = -(touch.clientY / window.innerHeight) * 2 + 1;
+      
+      const raycaster = scene.components.raycaster;
+      raycaster.data.origin.set(x, y, -0.1);
+      
+      // Place the model on a detected surface
+      const intersects = raycaster.intersectObjects(scene.object3D.children, true);
+      if (intersects.length > 0) {
+        const point = intersects[0].point;
+        model.setAttribute("position", point);
+        model.setAttribute("visible", "true");
+      }
+    });
+  </script>
+</body>
 </html>
