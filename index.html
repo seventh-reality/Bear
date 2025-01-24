@@ -61,14 +61,14 @@
       const x = (touch.clientX / window.innerWidth) * 2 - 1;
       const y = -(touch.clientY / window.innerHeight) * 2 + 1;
       
-      const raycaster = scene.components.raycaster;
+      const raycaster = scene.querySelector("[raycaster]").components.raycaster;
       raycaster.data.origin.set(x, y, -0.1);
       
       // Place the model on a detected surface
-      const intersects = raycaster.intersectObjects(scene.object3D.children, true);
+      const intersects = raycaster.getIntersections();
       if (intersects.length > 0) {
         const point = intersects[0].point;
-        model.setAttribute("position", point);
+        model.setAttribute("position", `${point.x} ${point.y} ${point.z}`);
         model.setAttribute("visible", "true");
       }
     });
